@@ -1,11 +1,12 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
+
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 
 using PaymentGateway.Api.Controllers;
+using PaymentGateway.Api.Infrastructure.Persistance;
 using PaymentGateway.Api.Models.Responses;
-using PaymentGateway.Api.Services;
 
 namespace PaymentGateway.Api.Tests;
 
@@ -17,7 +18,7 @@ public class PaymentsControllerTests
     public async Task RetrievesAPaymentSuccessfully()
     {
         // Arrange
-        var payment = new PostPaymentResponse
+        var payment = new Domain.Entries.Payment
         {
             Id = Guid.NewGuid(),
             ExpiryYear = _random.Next(2023, 2030),

@@ -1,4 +1,9 @@
-using PaymentGateway.Api.Services;
+using FluentValidation;
+
+using PaymentGateway.Api.Infrastructure.Persistance;
+using PaymentGateway.Application.Abstractions.Repositories;
+using PaymentGateway.Application.Abstractions.Services;
+using PaymentGateway.Application.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,7 +14,10 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddSingleton<PaymentsRepository>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
+
+builder.Services.AddSingleton<IPaymentsRepository, PaymentsRepository>();
+builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
 
 var app = builder.Build();
 

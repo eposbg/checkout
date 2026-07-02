@@ -1,6 +1,8 @@
-﻿namespace PaymentGateway.Api.Models.Responses;
+﻿using PaymentGateway.Domain.Enums;
 
-public class PostPaymentResponse
+namespace PaymentGateway.Api.Models.Responses;
+
+public class GetPaymentResponse
 {
     public Guid Id { get; set; }
     public PaymentStatus Status { get; set; }
