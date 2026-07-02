@@ -1,6 +1,4 @@
-﻿using System.Diagnostics.Eventing.Reader;
-
-using FluentValidation;
+﻿using FluentValidation;
 
 using PaymentGateway.Api.Models.Requests;
 
@@ -23,10 +21,10 @@ namespace PaymentGateway.Api.Validators
                 .LessThanOrEqualTo(12)
                 .WithMessage("ExpiryMonth is required and needs to be a value between 1-12");
 
-            //RuleFor(x => x.ExpiryYear)
-            //    .NotEmpty()
-            //    .Must((request, expiryYear) => CheckExpirationDate(request))
-            //    .WithMessage("ExpiryYear is required");
+            RuleFor(x => x.ExpiryYear)
+                .NotEmpty()
+                .Must((request, expiryYear) => CheckExpirationDate(request))
+                .WithMessage("ExpiryYear is required");
 
             RuleFor(x => x.Amount)
                    .GreaterThan(0)
@@ -36,10 +34,15 @@ namespace PaymentGateway.Api.Validators
 
         public bool ValidCreditCardNumber(string cardNumber)
         {
+            if (string.IsNullOrWhiteSpace(cardNumber))
+            {
+                return false;
+            }
+
             if (cardNumber.Length < 14 || cardNumber.Length > 19)
                 return false;
 
-            if (string.IsNullOrWhiteSpace(cardNumber) || !cardNumber.All(char.IsDigit))
+            if (!cardNumber.All(char.IsDigit))
                 return false;
 
             return true;
@@ -47,7 +50,16 @@ namespace PaymentGateway.Api.Validators
 
         public bool CheckExpirationDate(PostPaymentRequest request)
         {
-            return DateTime.Now.Date > new DateTime(request.ExpiryYear, request.ExpiryMonth + 1, 1).Date;   
+            if (request.ExpiryMonth < 1 || request.ExpiryMonth > 12 || request.ExpiryYear < DateTime.Now.Year)
+                return false;
+
+            var expiresAt = new DateTime(
+                request.ExpiryYear,
+                request.ExpiryMonth,
+                DateTime.DaysInMonth(request.ExpiryYear, request.ExpiryMonth));
+
+
+            return expiresAt.Date >= DateTime.Now.Date;
         }
     }
 }
