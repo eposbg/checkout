@@ -19,7 +19,7 @@ using PaymentGateway.Application.Abstractions.Services;
 using PaymentGateway.Application.Models.AcquiringBank;
 using PaymentGateway.Application.Services;
 
-namespace PaymentGateway.Api.Tests;
+namespace PaymentGateway.Api.Tests.Api;
 
 public class PaymentsControllerValidationTests
 {
@@ -31,7 +31,7 @@ public class PaymentsControllerValidationTests
 
         var paymentsRepository = new PaymentsRepository();
         var mockBankClient = Substitute.For<IAcquiringBankClient>();
-        mockBankClient.ProcessPayment(Arg.Any<PostPaymentRequest>(), Arg.Any<CancellationToken>())
+        mockBankClient.ProcessPayment(Arg.Any<BankPaymentRequest>(), Arg.Any<CancellationToken>())
             .Returns(new BankPaymentResponse { Authorized = true, AuthorizationCode = Guid.NewGuid().ToString() });
 
         var webApplicationFactory = new WebApplicationFactory<PaymentsController>();

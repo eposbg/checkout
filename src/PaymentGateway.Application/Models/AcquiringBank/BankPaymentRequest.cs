@@ -2,7 +2,7 @@
 
 namespace PaymentGateway.Application.Models.AcquiringBank
 {
-    public record ProcessRequest
+    public record BankPaymentRequest
     {
         [JsonPropertyName("card_number")]
         public string CardNumber { get; set; }
@@ -14,7 +14,7 @@ namespace PaymentGateway.Application.Models.AcquiringBank
         public string Currency { get; set; }
 
         [JsonPropertyName("amount")]
-        public int Amount { get; set; }
+        public long Amount { get; set; }
 
         [JsonPropertyName("cvv")]
         public string Cvv { get; set; }

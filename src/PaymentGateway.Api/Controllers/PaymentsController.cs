@@ -33,8 +33,8 @@ public class PaymentsController(IPaymentService paymentService, IValidator<PostP
             return BadRequest(validationResult.Errors);
         }
 
-        var payment = await _paymentService.Process(request, HttpContext.RequestAborted);
+        var result = await _paymentService.Process(request, HttpContext.RequestAborted);
 
-        return new OkObjectResult(payment);
+        return new OkObjectResult(result);
     }
 }

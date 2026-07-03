@@ -5,6 +5,6 @@ namespace PaymentGateway.Application.Abstractions.ExternalServices
 {
     public interface IAcquiringBankClient
     {
-        Task<BankPaymentResponse> ProcessPayment(PostPaymentRequest request, CancellationToken ct);
+        Task<BankPaymentResponse> ProcessPayment(BankPaymentRequest request, CancellationToken ct);
     }
 }

@@ -5,7 +5,7 @@ namespace PaymentGateway.Application.Abstractions.Services
 {
     public interface IPaymentService
     {
-        Task<PostPaymentRequest?> Get(Guid id);
+        Task<PostPaymentResponse?> Get(Guid id);
         Task<PostPaymentResponse?> Process(PostPaymentRequest request, CancellationToken ct);
     }
 }
