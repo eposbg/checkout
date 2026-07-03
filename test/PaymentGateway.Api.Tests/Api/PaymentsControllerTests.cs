@@ -7,11 +7,14 @@ using Microsoft.Extensions.DependencyInjection;
 
 using NSubstitute;
 
+using NuGet.Frameworks;
+
 using PaymentGateway.Api.Controllers;
 using PaymentGateway.Api.Infrastructure.Persistance;
 using PaymentGateway.Api.Models.Requests;
 using PaymentGateway.Api.Models.Responses;
 using PaymentGateway.Application.Abstractions.ExternalServices;
+using PaymentGateway.Application.Abstractions.Repositories;
 using PaymentGateway.Application.Models.AcquiringBank;
 
 namespace PaymentGateway.Api.Tests.Api;
@@ -21,15 +24,16 @@ public class PaymentsControllerTests
     private readonly Random _random = new();
 
 
-    [Fact]
-    public async Task ProcessValidPaymentSuccessfully()
+    [Theory]
+    [InlineData(true, "Authorized")]
+    [InlineData(false, "Declined")]
+    public async Task ProcessValidPayment(bool bankAuthorized, string expectedStatus)
     {
         // Arrange
-
         var repository = new PaymentsRepository();
         var mockAcquiringBankClient = Substitute.For<IAcquiringBankClient>();
         mockAcquiringBankClient.ProcessPayment(Arg.Any<BankPaymentRequest>(), Arg.Any<CancellationToken>())
-            .Returns(new BankPaymentResponse { Authorized = true });
+            .Returns(new BankPaymentResponse { Authorized = bankAuthorized });
 
         var webApplicationFactory = new WebApplicationFactory<PaymentsController>();
         var client = webApplicationFactory
@@ -46,12 +50,14 @@ public class PaymentsControllerTests
 
         // Act 
         var response = await client.PostAsJsonAsync("/api/payments", payload);
+        var result = await response.Content.ReadFromJsonAsync<PostPaymentResponse>();
+
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.IsType<PostPaymentResponse>(response);
-
-        //Assert.Contains(repository.)
+        Assert.NotNull(result);
+        Assert.Equal(expectedStatus, result?.Status);
     }
+
 
 
     [Fact]
@@ -68,18 +74,14 @@ public class PaymentsControllerTests
             Currency = "GBP"
         };
 
-        var paymentsRepository = new PaymentsRepository();
-        paymentsRepository.Add(payment);
+        var mockPaymentRepository = Substitute.For<IPaymentsRepository>();
+        mockPaymentRepository.Get(Arg.Any<Guid>()).Returns(payment);
 
-        var mockAcquiringBankClient = Substitute.For<IAcquiringBankClient>();
-        mockAcquiringBankClient.ProcessPayment(Arg.Any<BankPaymentRequest>(), Arg.Any<CancellationToken>())
-            .Returns(new BankPaymentResponse { Authorized = true });
-
+        
         var webApplicationFactory = new WebApplicationFactory<PaymentsController>();
         var client = webApplicationFactory.WithWebHostBuilder(builder =>
             builder.ConfigureServices(services => ((ServiceCollection)services)
-                .AddScoped(x => mockAcquiringBankClient)
-                .AddSingleton(paymentsRepository)))
+                .AddSingleton(mockPaymentRepository)))
             .CreateClient();
 
         // Act

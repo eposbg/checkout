@@ -18,6 +18,9 @@ public class PaymentsController(IPaymentService paymentService, IValidator<PostP
     public async Task<ActionResult<PostPaymentResponse?>> GetPaymentAsync(Guid id)
     {
         var payment = await _paymentService.Get(id);
+        if (payment == null) {
+            return NotFound();
+        }
 
         return new OkObjectResult(payment);
     }

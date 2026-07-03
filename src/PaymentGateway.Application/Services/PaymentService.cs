@@ -12,13 +12,18 @@ using PaymentGateway.Domain.Enums;
 
 namespace PaymentGateway.Application.Services
 {
-    public class PaymentService(IPaymentsRepository paymentsRepository, IAcquiringBankClient acquiringBankClient, ILogger<PaymentService> logger) : IPaymentService
+    public class PaymentService(
+            IPaymentsRepository paymentsRepository, IAcquiringBankClient acquiringBankClient, 
+            ILogger<PaymentService> logger) : IPaymentService
     {
         private readonly IPaymentsRepository _paymentsRepository = paymentsRepository;
 
-        public async Task<PostPaymentResponse> Get(Guid id)
+        public async Task<PostPaymentResponse?> Get(Guid id)
         {
             var payment = _paymentsRepository.Get(id);
+            if (payment == null)
+                return null;
+
             return new PostPaymentResponse
             {
                 Id = payment.Id,
