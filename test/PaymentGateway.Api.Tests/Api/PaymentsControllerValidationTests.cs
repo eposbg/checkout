@@ -51,7 +51,7 @@ public class PaymentsControllerValidationTests
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.NotNull(paymentResponse);
     }
-    
+
     [Theory]
     [InlineData("111")]
     [InlineData("12345678901234567890")]
@@ -188,8 +188,19 @@ public class PaymentsControllerValidationTests
         var payment = CreateValidPaymentRequest();
         payment.Cvv = cvv;
 
+        var mockBankClient = Substitute.For<IAcquiringBankClient>();
+        mockBankClient
+            .ProcessPayment(Arg.Any<BankPaymentRequest>(), Arg.Any<CancellationToken>())
+            .Returns(new BankPaymentResponse
+            {
+                Authorized = true
+            });
+
         var webApplicationFactory = new WebApplicationFactory<PaymentsController>();
-        var client = webApplicationFactory.WithWebHostBuilder(builder => { }).CreateClient();
+        var client = webApplicationFactory.WithWebHostBuilder(builder =>
+            builder.ConfigureServices(services => ((ServiceCollection)services)
+            .AddScoped<IAcquiringBankClient>(x => mockBankClient))
+        ).CreateClient();
 
         // Act
         var response = await client.PostAsJsonAsync($"/api/payments", payment);

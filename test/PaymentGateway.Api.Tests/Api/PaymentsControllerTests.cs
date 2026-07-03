@@ -12,6 +12,7 @@ using NSubstitute.ExceptionExtensions;
 using NuGet.Frameworks;
 
 using PaymentGateway.Api.Controllers;
+using PaymentGateway.Api.Infrastructure.ExternalServices;
 using PaymentGateway.Api.Infrastructure.Persistance;
 using PaymentGateway.Api.Models.Requests;
 using PaymentGateway.Api.Models.Responses;
@@ -65,9 +66,19 @@ public class PaymentsControllerTests
     {
         // Arrange
         var mockRepository = new PaymentsRepository();
+        var mockBankClient = Substitute.For<IAcquiringBankClient>();
+        mockBankClient
+            .ProcessPayment(Arg.Any<BankPaymentRequest>(), Arg.Any<CancellationToken>())
+            .Returns(new BankPaymentResponse
+            {
+                Authorized = true
+            });
+
         var webApplicationFactory = new WebApplicationFactory<PaymentsController>();
+
         var client = webApplicationFactory.WithWebHostBuilder(builder =>
         builder.ConfigureServices(services => ((ServiceCollection)services)
+            .AddScoped<IAcquiringBankClient>(x => mockBankClient)
             .AddSingleton<IPaymentsRepository>(mockRepository))
         ).CreateClient();
 
