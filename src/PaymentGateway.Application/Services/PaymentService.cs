@@ -30,7 +30,7 @@ namespace PaymentGateway.Application.Services
             {
                 Id = payment.Id,
                 Status = payment.Status.ToString(),
-                Amount = payment.Amount,
+                Amount = MoneyHelper.ToMinorUnits(payment.Amount),
                 CardNumberLastFour = payment.CardNumberLastFour,
                 ExpiryMonth = payment.ExpiryMonth,
                 ExpiryYear = payment.ExpiryYear,
@@ -46,7 +46,7 @@ namespace PaymentGateway.Application.Services
                 CardNumber = request.CardNumber.ToString(),
                 ExpiryDate = $"{request.ExpiryMonth}/{request.ExpiryYear}",
                 Currency = request.Currency,
-                Amount = MoneyHelper.ToMinorUnits(request.Amount),
+                Amount = request.Amount,
                 Cvv = request.Cvv.ToString()
             };
 
@@ -57,14 +57,14 @@ namespace PaymentGateway.Application.Services
             }
             catch (BankServiceUnavailableException ex)
             {
-                _logger.LogCritical(ex, "Back Service is unavalable");
+                _logger.LogCritical(ex, "Bank Service is unavailable");
                 throw;
             }
 
             var newPayment = new Payment
             {
                 Id = Guid.NewGuid(),
-                Amount = MoneyHelper.ToMinorUnits(request.Amount),
+                Amount = MoneyHelper.FromMinorUnits(request.Amount),
                 CardNumberLastFour = CardHelper.LastDigitsOfCardNumber(request.CardNumber, 4),
                 Status = response.Authorized ? PaymentStatus.Authorized : PaymentStatus.Declined,
                 Currency = request.Currency,

@@ -10,6 +10,6 @@ namespace PaymentGateway.Domain.Entries
         public int ExpiryMonth { get; set; }
         public int ExpiryYear { get; set; }
         public string Currency { get; set; }
-        public long Amount { get; set; }
+        public decimal Amount { get; set; }
     }
 }

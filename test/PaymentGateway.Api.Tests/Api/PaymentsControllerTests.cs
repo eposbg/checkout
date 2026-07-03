@@ -26,7 +26,6 @@ public class PaymentsControllerTests
 {
     private readonly Random _random = new();
 
-
     [Theory]
     [InlineData(true, "Authorized")]
     [InlineData(false, "Declined")]
@@ -62,7 +61,33 @@ public class PaymentsControllerTests
     }
 
     [Fact]
-    public async Task PaymentProcessReturns503OnBankServiceUnavalable()
+    public async Task ProcessValidPaymentWithAmountRepositoryRepoRepresentation()
+    {
+        // Arrange
+        var mockRepository = new PaymentsRepository();
+        var webApplicationFactory = new WebApplicationFactory<PaymentsController>();
+        var client = webApplicationFactory.WithWebHostBuilder(builder =>
+        builder.ConfigureServices(services => ((ServiceCollection)services)
+            .AddSingleton<IPaymentsRepository>(mockRepository))
+        ).CreateClient();
+
+        var request = CreateValidPaymentRequest();
+        request.Amount = 1050; // This should be stored as 10.5 in the DB
+
+        // Act 
+        var response = await client.PostAsJsonAsync("/api/payments", request);
+        response.EnsureSuccessStatusCode();
+        var result = await response.Content.ReadFromJsonAsync<PostPaymentResponse>();
+
+        // Assert 
+        Assert.NotNull(result);
+        var dbPayment = mockRepository.Get(result!.Id);
+        Assert.NotNull(dbPayment);
+        Assert.Equal(10.5m, dbPayment!.Amount);
+    }
+
+    [Fact]
+    public async Task PaymentProcessReturns502OnBankServiceUnavailable()
     {
         // Arrange
         var repository = new PaymentsRepository();
@@ -87,7 +112,7 @@ public class PaymentsControllerTests
         var response = await client.PostAsJsonAsync("/api/payments", payload);
 
         // Assert
-        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+        Assert.Equal(HttpStatusCode.BadGateway, response.StatusCode);
     }
 
 
@@ -137,7 +162,6 @@ public class PaymentsControllerTests
         // Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
-
 
     private PostPaymentRequest CreateValidPaymentRequest()
     {

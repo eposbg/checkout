@@ -47,7 +47,10 @@ public class PaymentsController(IPaymentService paymentService, IValidator<PostP
         }
         catch (BankServiceUnavailableException)
         {
-            return StatusCode(503);
+            return StatusCode(StatusCodes.Status502BadGateway, new { 
+                Error = "Bad Gateway",
+                Message = "The acquiring bank is temporarily unavailable."
+            });
         }
 
 

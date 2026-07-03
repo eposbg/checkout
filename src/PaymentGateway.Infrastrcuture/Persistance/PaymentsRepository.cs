@@ -16,19 +16,5 @@ public class PaymentsRepository : IPaymentsRepository
     {
         return Payments.FirstOrDefault(p => p.Id == id);
     }
-   
-    public async Task CreateAsync(Payment payment)
-    {
-        var existingPayment = Payments.FirstOrDefault(x => x.Id == payment.Id);
-        if (existingPayment == null)
-        {
-            Payments.Add(payment);
-        }
-
-        existingPayment.Currency = payment.Currency;
-        //existingPayment.Amount.
-
-
-        
-    }
+ 
 }
