@@ -1,5 +1,10 @@
-﻿using FluentValidation;
+﻿using System.Diagnostics.Eventing.Reader;
 
+using FluentValidation;
+
+using Microsoft.Extensions.Options;
+
+using PaymentGateway.Api.Configuration;
 using PaymentGateway.Api.Models.Requests;
 
 namespace PaymentGateway.Api.Validators
@@ -7,7 +12,7 @@ namespace PaymentGateway.Api.Validators
     public class PaymentRequestValidator : AbstractValidator<PostPaymentRequest>
     {
 
-        public PaymentRequestValidator()
+        public PaymentRequestValidator(IOptions<PaymentSettings> paymentSettings)
         {
             RuleFor(x => x.CardNumber)
                 .Must(ValidCreditCardNumber)
@@ -29,6 +34,16 @@ namespace PaymentGateway.Api.Validators
             RuleFor(x => x.Amount)
                    .GreaterThan(0)
                    .WithMessage("Amount must be greater than 0");
+
+            RuleFor(x => x.Currency)
+                .NotEmpty()
+                .Must(x => ValidCurrency(x, paymentSettings.Value.SupportedCurrencies))
+                .WithMessage("The currency is invalid");
+
+            RuleFor(x => x.Cvv)
+               .NotEmpty()
+               .Must(x => ValidCvv(x))
+               .WithMessage("The cvv is invalid");
 
         }
 
@@ -60,6 +75,29 @@ namespace PaymentGateway.Api.Validators
 
 
             return expiresAt.Date >= DateTime.Now.Date;
+        }
+
+        public bool ValidCurrency(string currency, string[] supportedCurrencies)
+        {
+            if (currency.Length != 3)
+                return false;
+
+
+            return supportedCurrencies.Contains(currency);
+        }
+
+        public bool ValidCvv(string cvv)
+        {
+            if (string.IsNullOrWhiteSpace(cvv))
+                return false;
+
+            if (cvv.Length < 3 || cvv.Length > 4)
+                return false;
+
+            if (!cvv.All(char.IsDigit))
+                return false;
+
+            return true;
         }
     }
 }
