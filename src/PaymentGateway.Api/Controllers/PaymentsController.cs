@@ -1,9 +1,11 @@
 ﻿using FluentValidation;
 
 using Microsoft.AspNetCore.Mvc;
+
 using PaymentGateway.Api.Models.Requests;
 using PaymentGateway.Api.Models.Responses;
 using PaymentGateway.Application.Abstractions.Services;
+using PaymentGateway.Domain.Exceptions;
 
 namespace PaymentGateway.Api.Controllers;
 
@@ -18,7 +20,8 @@ public class PaymentsController(IPaymentService paymentService, IValidator<PostP
     public async Task<ActionResult<PostPaymentResponse?>> GetPaymentAsync(Guid id)
     {
         var payment = await _paymentService.Get(id);
-        if (payment == null) {
+        if (payment == null)
+        {
             return NotFound();
         }
 
@@ -32,12 +35,21 @@ public class PaymentsController(IPaymentService paymentService, IValidator<PostP
            request,
            HttpContext.RequestAborted);
 
-        if (!validationResult.IsValid) {
+        if (!validationResult.IsValid)
+        {
             return BadRequest(validationResult.Errors);
         }
 
-        var result = await _paymentService.Process(request, HttpContext.RequestAborted);
+        try
+        {
+            var result = await _paymentService.Process(request, HttpContext.RequestAborted);
+            return new OkObjectResult(result);
+        }
+        catch (BankServiceUnavailableException)
+        {
+            return StatusCode(503);
+        }
 
-        return new OkObjectResult(result);
+
     }
 }

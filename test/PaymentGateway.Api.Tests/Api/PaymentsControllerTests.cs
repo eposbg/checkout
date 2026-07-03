@@ -1,11 +1,13 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
+using System.Text;
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 
 using NuGet.Frameworks;
 
@@ -16,6 +18,7 @@ using PaymentGateway.Api.Models.Responses;
 using PaymentGateway.Application.Abstractions.ExternalServices;
 using PaymentGateway.Application.Abstractions.Repositories;
 using PaymentGateway.Application.Models.AcquiringBank;
+using PaymentGateway.Domain.Exceptions;
 
 namespace PaymentGateway.Api.Tests.Api;
 
@@ -58,6 +61,34 @@ public class PaymentsControllerTests
         Assert.Equal(expectedStatus, result?.Status);
     }
 
+    [Fact]
+    public async Task PaymentProcessReturns503OnBankServiceUnavalable()
+    {
+        // Arrange
+        var repository = new PaymentsRepository();
+        var mockAcquiringBankClient = Substitute.For<IAcquiringBankClient>();
+        mockAcquiringBankClient.ProcessPayment(Arg.Any<BankPaymentRequest>(), Arg.Any<CancellationToken>())
+                    .ThrowsAsync(new BankServiceUnavailableException());
+
+        var webApplicationFactory = new WebApplicationFactory<PaymentsController>();
+        var client = webApplicationFactory
+            .WithWebHostBuilder(
+                builder =>
+                    builder
+                        .ConfigureServices(services => ((ServiceCollection)services)
+                        .AddScoped(x => mockAcquiringBankClient)
+                        .AddSingleton(repository)
+                ))
+            .CreateClient();
+
+        var payload = CreateValidPaymentRequest();
+
+        // Act 
+        var response = await client.PostAsJsonAsync("/api/payments", payload);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+    }
 
 
     [Fact]
@@ -77,7 +108,7 @@ public class PaymentsControllerTests
         var mockPaymentRepository = Substitute.For<IPaymentsRepository>();
         mockPaymentRepository.Get(Arg.Any<Guid>()).Returns(payment);
 
-        
+
         var webApplicationFactory = new WebApplicationFactory<PaymentsController>();
         var client = webApplicationFactory.WithWebHostBuilder(builder =>
             builder.ConfigureServices(services => ((ServiceCollection)services)

@@ -1,6 +1,4 @@
-﻿using PaymentGateway.Domain.Enums;
-
-namespace PaymentGateway.Api.Models.Responses;
+﻿namespace PaymentGateway.Api.Models.Responses;
 
 public class PostPaymentResponse
 {
@@ -10,5 +8,5 @@ public class PostPaymentResponse
     public int ExpiryMonth { get; set; }
     public int ExpiryYear { get; set; }
     public string Currency { get; set; }
-    public decimal Amount { get; set; }
+    public long Amount { get; set; }
 }
